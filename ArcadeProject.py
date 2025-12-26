@@ -36,6 +36,7 @@ class Platformer(arcade.Window):
         self.platforms = arcade.SpriteList()  # Двигающиеся платформы
         self.ladders = arcade.SpriteList()
         self.mechanics = arcade.SpriteList()
+        self.keyboard_1 = arcade.SpriteList()
 
         # Игрок
         self.player = None
@@ -62,10 +63,25 @@ class Platformer(arcade.Window):
                                     scale=0.8)
         self.player.center_x, self.player.center_y = self.spawn_point
         self.player_list.append(self.player)
-        st = arcade.Sprite(":resources:images/tiles/stoneCenter.png", 0.5)
-        st.center_x = 500
-        st.center_y = 300
-        self.mechanics.append(st)
+        # --- Gui на экране ---
+        self.puzzle_1_texture = arcade.load_texture('Puzzle_1_texture.png')
+
+        # --- Для определения какую клавишу отображать ---
+        self.keyboard_Number = 0
+        # --- Для того чтобы игрок не мог ходить пока находится в головоломке ---
+        self.Can_walk = True
+        # --- Для отображения головоломки ---
+        self.puzzle = 0
+        # --- Клавиатура на экране ---
+        self.keyboard_E = arcade.Sprite("E_Keyboard.png", 1.3)
+        self.keyboard_E.center_x = self.player.center_x
+        self.keyboard_E.center_y = self.player.center_y + 10
+        self.keyboard_1.append(self.keyboard_E)
+        # --- Электро щиток ---
+        self.tile = arcade.Sprite(":resources:images/tiles/stoneCenter.png", scale=0.5)
+        self.tile.center_x = 500
+        self.tile.center_y = 120
+        self.mechanics.append(self.tile)
         # --- Мир: сделаем крошечную арену руками ---
         # Пол из «травы»
         for x in range(0, 1600, 64):
@@ -121,12 +137,16 @@ class Platformer(arcade.Window):
         self.walls.draw()
         self.platforms.draw()
         self.ladders.draw()
-
+        self.mechanics.draw()
         self.player_list.draw()
+        if self.keyboard_Number == 1:
+            self.keyboard_1.draw()
 
         # --- GUI ---
         self.gui_camera.use()
         self.batch.draw()
+        if self.puzzle == 1:
+            self.puzzle_1 = arcade.draw_texture_rect(self.puzzle_1_texture, arcade.rect.XYWH(self.width // 2, self.height // 2, self.width // 2, self.height // 1.2))
 
     def on_key_press(self, key, modifiers):
         if key in (arcade.key.LEFT, arcade.key.A):
@@ -137,6 +157,12 @@ class Platformer(arcade.Window):
             self.up = True
         elif key in (arcade.key.DOWN, arcade.key.S):
             self.down = True
+        elif arcade.key.E and int(self.keyboard_Number) == 1 and self.Can_walk:
+            self.puzzle = 1
+            self.Can_walk = False
+        elif arcade.key.E and int(self.keyboard_Number) == 1 and not self.Can_walk:
+            self.puzzle = 0
+            self.Can_walk = True
 
     def on_key_release(self, key, modifiers):
         if key in (arcade.key.LEFT, arcade.key.A):
@@ -152,12 +178,14 @@ class Platformer(arcade.Window):
     def on_update(self, dt: float):
         # Обработка горизонтального движения
         move = 0
-        if self.left and not self.right:
+        if self.left and not self.right and self.Can_walk:
             move = -MOVE_SPEED
-        elif self.right and not self.left:
+        elif self.right and not self.left and self.Can_walk:
             move = MOVE_SPEED
         self.player.change_x = move
 
+        self.keyboard_E.center_x = self.player.center_x
+        self.keyboard_E.center_y = self.player.center_y + 40
         # Лестницы имеют приоритет над гравитацией: висим/лезем
         on_ladder = self.engine.is_on_ladder()  # На лестнице?
         if on_ladder:
@@ -182,8 +210,11 @@ class Platformer(arcade.Window):
         self.engine.update()
 
         # Собираем монетки и проверяем опасности
-        for mechanics in arcade.check_for_collision_with_list(self.player, self.mechanics):
-            pass
+        if arcade.check_for_collision_with_list(self.player, self.mechanics):
+            self.keyboard_Number = 1
+        else:
+            self.keyboard_Number = 0
+
         # Камера — плавно к игроку и в рамках мира
         target = (self.player.center_x, self.player.center_y)
         cx, cy = self.world_camera.position
