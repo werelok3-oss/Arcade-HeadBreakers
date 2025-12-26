@@ -157,10 +157,10 @@ class Platformer(arcade.Window):
             self.up = True
         elif key in (arcade.key.DOWN, arcade.key.S):
             self.down = True
-        elif arcade.key.E and int(self.keyboard_Number) == 1 and self.Can_walk:
+        elif key == arcade.key.E and int(self.keyboard_Number) == 1 and self.Can_walk:
             self.puzzle = 1
             self.Can_walk = False
-        elif arcade.key.E and int(self.keyboard_Number) == 1 and not self.Can_walk:
+        elif key == arcade.key.E and int(self.keyboard_Number) == 1 and not self.Can_walk:
             self.puzzle = 0
             self.Can_walk = True
 
