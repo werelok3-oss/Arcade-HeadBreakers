@@ -424,8 +424,8 @@ class Platformer(arcade.Window):
         self.player.center_y += 50 * dt
 
         # Ограничение в пределах экрана
-        self.player.center_x = max(self.width / 2, min(SCREEN_W - self.width / 2, self.player.center_x))
-        self.player.center_y = max(self.height / 2, min(SCREEN_H - self.height / 2, self.player.center_y))
+        self.center_x1 = max(self.player.width / 2, min(SCREEN_W - self.width / 2, self.player.center_x))
+        self.center_y1 = max(self.player.height / 2, min(SCREEN_H - self.height / 2, self.player.center_y))
 
         # Проверка на движение
         self.is_walking = self.player.center_x != old_x or self.player.center_y != old_y
