@@ -192,7 +192,8 @@ class Platformer(arcade.Window):
         self.time2 = 30
         self.room1_x = 300
         self.room2_x = 910
-        self.what_room = True
+        self.room3_x = 1520
+        self.what_room = 0
         self.right_1 = arcade.load_texture('гг_вправо_1.png')
         self.right_1.size = (350, 190)
         self.right_2 = arcade.load_texture('гг_вправо_2.png')
@@ -221,8 +222,12 @@ class Platformer(arcade.Window):
         self.room2 = arcade.Sprite('background.png', scale=0.4)
         self.room2.center_x = self.room2_x
         self.room2.center_y = 250
+        self.room3 = arcade.Sprite('background.png', scale=0.4)
+        self.room3.center_x = self.room3_x
+        self.room3.center_y = 250
         self.cabels.append(self.room1)
         self.cabels.append(self.room2)
+        self.cabels.append(self.room3)
         # --- Игрок ---
         self.player_list.clear()
         self.player = Hero()
@@ -513,15 +518,15 @@ class Platformer(arcade.Window):
             self.x_electrical += 610
             self.tile.center_x = self.x_electrical
 
-            if self.what_room and self.waves == 3:
-                self.what_room = False
-
-                self.room1_x += 1220
-                self.room1.center_x = self.room1_x
+            if self.what_room == 0 and self.waves == 3:
+                self.what_room = 1
                 self.player.center_x = self.room2.center_x - 100
-            elif self.what_room == False and self.waves == 2:
-                self.what_room = True
-                self.player.center_x = self.room1.center_x - 100
+            elif self.what_room == 1 and self.waves == 2:
+                self.what_room = 2
+                self.player.center_x = self.room3.center_x - 100
+            # elif self.what_room == 2 and self.waves == 1:
+            #     self.what_room = 0
+            #     self.player.center_x = self.room1.center_x - 100
 
         if self.score_no:
             self.score += 1
