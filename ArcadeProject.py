@@ -1222,10 +1222,9 @@ class Choice(arcade.View):
 
         # Layout для организации — как полки в шкафу
         self.box_layout = UIBoxLayout(vertical=True, space_between=5, align='left')  # Вертикальный стек
-        self.box_layout_choice = UIBoxLayout(vertical=False, space_between=5, x=200)  # Вертикальный сте
+        self.box_layout_choice = UIBoxLayout(vertical=False, space_between=5, x=SCREEN_WIDTH / 7, y=SCREEN_HEIGHT / 2)  # Вертикальный сте
         # Добавим все виджеты в box, потом box в anchor
         self.setup_widgets()  # Функция ниже
-        self.y1 = 400
         self.manager.add(self.box_layout)  # Всё в manager
         self.manager.add(self.box_layout_choice)  # Всё в manager
 
@@ -1279,20 +1278,20 @@ class Choice(arcade.View):
         self.clear()
         if self.play_button1.hovered:
             self.play_button1.size = (SCREEN_WIDTH / 2.5, SCREEN_WIDTH / 2.5)
-            self.box_layout_choice.center_y = 800
+            self.box_layout_choice.center_y = SCREEN_HEIGHT / 2
         else:
             self.play_button1.size = self.size1
         if self.play_button2.hovered:
-            self.box_layout_choice.center_y = 800
+            self.box_layout_choice.center_y = SCREEN_HEIGHT / 2
             self.play_button2.size = (SCREEN_WIDTH / 3, SCREEN_WIDTH / 3)
         else:
             self.play_button2.size = self.size2
         if self.play_button3.hovered:
-            self.box_layout_choice.center_y = 800
+            self.box_layout_choice.center_y = SCREEN_HEIGHT / 2
             self.play_button3.size = (SCREEN_WIDTH / 3, SCREEN_WIDTH / 3)
         else:
             self.play_button3.size = self.size3
-        self.box_layout_choice.center_y = 800
+        self.box_layout_choice.center_y = SCREEN_HEIGHT / 2
         self.manager.draw()  # Рисуй GUI поверх всего
 
     def back(self):
@@ -1311,7 +1310,7 @@ class Choice_puzzle_down(arcade.View):
         self.manager.enable()  # Включить, чтоб виджеты работали
         # Layout для организации — как полки в шкафу
         self.box_layout = UIBoxLayout(vertical=True, space_between=5, align='left')  # Вертикальный стек
-        self.box_layout_choice = UIBoxLayout(vertical=False, space_between=40, x=500)  # Вертикальный сте
+        self.box_layout_choice = UIBoxLayout(vertical=False, space_between=40, x=SCREEN_WIDTH / 7, y=SCREEN_HEIGHT / 2)  # Вертикальный сте
         # Добавим все виджеты в box, потом box в anchor
         self.setup_widgets()  # Функция ниже
 
@@ -1344,15 +1343,15 @@ class Choice_puzzle_down(arcade.View):
         self.clear()
         if self.play_button1.hovered:
             self.play_button1.size = (SCREEN_WIDTH / 2.5, SCREEN_WIDTH / 2.5)
-            self.box_layout_choice.center_y = 800
+            self.box_layout_choice.center_y = SCREEN_HEIGHT / 2
         else:
             self.play_button1.size = self.size1
         if self.play_button3.hovered:
-            self.box_layout_choice.center_y = 800
+            self.box_layout_choice.center_y = SCREEN_HEIGHT / 2
             self.play_button3.size = (SCREEN_WIDTH / 2.5, SCREEN_WIDTH / 2.5)
         else:
             self.play_button3.size = self.size3
-        self.box_layout_choice.center_y = 800
+        self.box_layout_choice.center_y = SCREEN_HEIGHT / 2
         self.manager.draw()  # Рисуй GUI поверх всего
 
     def infinity(self):
