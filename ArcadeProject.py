@@ -169,17 +169,21 @@ class Level_1(arcade.View):
                     bullet.remove_from_sprite_lists()
 
                 # Проверяем столкновение пуль с врагами
-            if self.bullet_list is not None and self.enemy_list is not None:
+            if self.bullet_list != None and self.enemy_list != None:
                 for bullet in self.bullet_list:
-                    enemy_hit_list = arcade.check_for_collision_with_list(bullet, self.enemy_list)
-                    if enemy_hit_list:
-                        for enemy in enemy_hit_list:
-                            bullet.remove_from_sprite_lists()  # Удаляем пулю
-                            self.boss1_hp -= 1
-                            if self.boss1_hp <= 0:
-                                self.enemy_list = None  # Удаляем врага
-                                self.attack_list = None
-                                self.attack_list_2 = None
+                    if bullet and self.enemy_list:
+                        try:
+                            enemy_hit_list = arcade.check_for_collision_with_list(bullet, self.enemy_list)
+                            if enemy_hit_list:
+                                for enemy in enemy_hit_list:
+                                    bullet.remove_from_sprite_lists()  # Удаляем пулю
+                                    self.boss1_hp -= 1
+                                    if self.boss1_hp <= 0:
+                                        self.enemy_list = None  # Удаляем врага
+                                        self.attack_list = None
+                                        self.attack_list_2 = None
+                        except Exception as e:
+                            print(e)
 
             if self.enemy_list is not None:
                 for enemy1 in self.enemy_list:
@@ -293,7 +297,7 @@ class Level_1(arcade.View):
         self.wall_list.draw()
         if self.bullet_list is not None:
             self.bullet_list.draw()
-        if self.enemy_list is not None and self.attack_list is not None and self.attack_list_2 is not None:
+        if self.enemy_list != None and self.attack_list != None and self.attack_list_2 != None:
             self.enemy_list.draw()
             self.attack_list.draw()
             self.attack_list_2.draw()
