@@ -7,7 +7,7 @@ import enum
 from arcade.gui import UIManager,UITextureButton, UILabel, UIMessageBox  # Это разные виджеты
 from arcade.gui.widgets.layout import UIBoxLayout  # А это менеджеры компоновки, как в pyQT
 
-SCREEN_WIDTH, SCREEN_HEIGHT = arcade.window_commands.get_display_size()
+SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
 TITLE = "HeadBreakers"
 # Физика и движение
 GRAVITY = 2            # Пикс/с^2
@@ -20,7 +20,7 @@ class FaceDirection(enum.Enum):
     RIGHT = 1
 
 # Задаём размеры окна
-SCREEN_W, SCREEN_H = arcade.window_commands.get_display_size()
+SCREEN_W, SCREEN_H = 800, 600
 
 SCREEN_TITLE = "BOSS BREAKERS"
 CHARACTER_SCALING = 1
@@ -264,7 +264,8 @@ class Level_1(arcade.View):
 
         self.batch = Batch()
         if self.player_list == None and self.texture != self.fonts.texture:
-            self.fonts = arcade.create_text_sprite(f"Поражение!\n Space для выхода в меню.\n")
+            self.fonts = arcade.create_text_sprite(f"Поражение!\nSpace для выхода.",
+                                                   font_size=20)
             arcade.stop_sound(self.backgound_player)
             self.texture = self.fonts.texture
             self.enemy_list.clear()
@@ -273,7 +274,8 @@ class Level_1(arcade.View):
             self.attack_list_2 = None
             self.fonts_list.append(self.fonts)
         if self.enemy_list == None and self.texture != self.fonts_2.texture:
-            self.fonts_2 = arcade.create_text_sprite(f"Победа!\n Общее время: {self.total_time // 1} секунд.\n Space для выхода в меню.\n")
+            self.fonts_2 = arcade.create_text_sprite(f"Победа!\nОбщее время: {self.total_time // 1} сек.\nSpace для выхода.",
+                                                     font_size=20)
             arcade.stop_sound(self.backgound_player)
             self.fonts_list.append(self.fonts_2)
             self.texture = self.fonts_2.texture
@@ -615,7 +617,7 @@ class Platformer(arcade.View):
         self.tile.center_y = 150
         self.mechanics.append(self.tile)
         self.text_timer = arcade.Text(f"Time: {self.time1}",
-                                      (self.width / 1.23), (self.height / 2), arcade.color.BRONZE, 40)
+                                      (self.width / 8) * 6, (self.height / 2), arcade.color.BRONZE, 20)
         # Пол из «травы»
         for x in range(0, 1800, 64):
             tile = arcade.Sprite("ground.png", scale=0.05)
@@ -973,7 +975,7 @@ class Platformer(arcade.View):
         if self.keyboard_Number == 1:
             self.keyboard_1.draw()
         if self.won:
-            arcade.draw_texture_rect(arcade.load_texture('backround.png'), arcade.rect.XYWH(((SCREEN_WIDTH / 200) - 18) + self.player.center_x, (SCREEN_HEIGHT / 9), (SCREEN_WIDTH / 2.87), (SCREEN_HEIGHT / 2.7)))
+            arcade.draw_texture_rect(arcade.load_texture('backround.png'), arcade.rect.XYWH((SCREEN_WIDTH / 200) + self.player.center_x, (SCREEN_HEIGHT / 3), (SCREEN_WIDTH / 2), (SCREEN_HEIGHT / 2)))
             self.manager_win.draw()
             self.manager_win.enable()
             self.manager.disable()
@@ -1093,7 +1095,7 @@ class Platformer(arcade.View):
 
         # Обновим счёт
         self.text_score = arcade.Text(f"Score: {self.score}",
-                                      SCREEN_W / 14, SCREEN_H / 2, arcade.color.SKY_BLUE,
+                                      SCREEN_W / 20, SCREEN_H / 2, arcade.color.SKY_BLUE,
                                       30, batch=self.batch)
 
 class Info(arcade.View):
@@ -1238,17 +1240,17 @@ class Choice(arcade.View):
         play_texture_hovered1 = arcade.load_texture("door_puzzle_down.png")
         self.play_button1 = UITextureButton(texture=play_texture_button1,
                                             texture_hovered=play_texture_hovered1,
-                                            scale=SCREEN_WIDTH / 3400)
+                                            scale=SCREEN_WIDTH / 4000)
         play_texture_button3 = arcade.load_texture("what_room.png")
         play_texture_hovered3 = arcade.load_texture("door_wonders_farmers.png")
         self.play_button3 = UITextureButton(texture=play_texture_button3,
                                       texture_hovered=play_texture_hovered3,
-                                      scale=SCREEN_WIDTH / 3400)
+                                      scale=SCREEN_WIDTH / 4000)
         play_texture_button2 = arcade.load_texture("what_room.png")
         play_texture_hovered2 = arcade.load_texture("door_breaker_dungeon.png")
         self.play_button2 = UITextureButton(texture=play_texture_button2,
                                             texture_hovered=play_texture_hovered2,
-                                            scale=SCREEN_WIDTH / 3400)
+                                            scale=SCREEN_WIDTH / 4000)
         self.size2 = self.play_button2.size
         self.size3 = self.play_button3.size
         self.play_button2.on_click = lambda event: self.choice_Breaker_Dungeon()
@@ -1375,7 +1377,7 @@ class Choice_puzzle_down(arcade.View):
         self.window.show_view(menu)
 
 def main():
-    game = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, 'Menu', fullscreen=True)
+    game = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, 'Menu')
     game.center_window()
     menu = Menu()
     game.show_view(menu)
