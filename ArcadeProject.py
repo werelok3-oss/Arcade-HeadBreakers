@@ -2,30 +2,25 @@ import arcade
 from arcade.camera import Camera2D
 from pyglet.graphics import Batch
 import random
-
-import time
+import sqlite3
 import enum
-import math
-SCREEN_W = 1280
-SCREEN_H = 720
-TITLE = "HeadBreakers"
+from arcade.gui import UIManager,UITextureButton, UILabel, UIMessageBox  # Это разные виджеты
+from arcade.gui.widgets.layout import UIBoxLayout  # А это менеджеры компоновки, как в pyQT
 
+SCREEN_WIDTH, SCREEN_HEIGHT = arcade.window_commands.get_display_size()
+TITLE = "HeadBreakers"
 # Физика и движение
 GRAVITY = 2            # Пикс/с^2
 MOVE_SPEED = 6
 LADDER_SPEED = 3        # Скорость по лестнице
 CAMERA_LERP = 0.12        # Плавность следования камеры
 
-
 class FaceDirection(enum.Enum):
     LEFT = 0
     RIGHT = 1
 
-
 # Задаём размеры окна
-SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 720
-
+SCREEN_W, SCREEN_H = arcade.window_commands.get_display_size()
 
 
 class Hero(arcade.Sprite):
@@ -55,8 +50,8 @@ class Hero(arcade.Sprite):
         self.face_direction = FaceDirection.LEFT  # и смотрим вправо
 
         # Центрируем персонажа
-        self.center_x = SCREEN_WIDTH // 2
-        self.center_y = SCREEN_HEIGHT // 2
+        self.center_x = SCREEN_W // 2
+        self.center_y = SCREEN_H // 2
 
     def update_animation(self, delta_time: float = 1 / 60):
         """ Обновление анимации """
@@ -109,15 +104,16 @@ class Hero(arcade.Sprite):
         self.is_walking = dx or dy
 
 
-class Platformer(arcade.Window):
-    def __init__(self):
-        super().__init__(SCREEN_W, SCREEN_H, TITLE, antialiasing=True)
+class Platformer(arcade.View):
+    def __init__(self, infinity=False):
+        super().__init__()
         self.start_time: float = 0.0
         self.texture = arcade.load_texture('backgroung_texture.png')
         # Камеры
         self.world_camera = Camera2D()
         self.gui_camera = Camera2D()
-
+        self.infinity = infinity
+        self.total_time = 0
         # Списки спрайтов
         self.player_list = arcade.SpriteList()
 
@@ -139,15 +135,81 @@ class Platformer(arcade.Window):
         self.left = self.right = self.up = self.down = self.jump_pressed = False
         self.jump_buffer_timer = 0.0
         self.time_since_ground = 999.0
-
         # Счёт
         self.score = 0
         self.batch = Batch()
         self.text_info = arcade.Text("AD/←→ — to walk",
                                      16, 16, arcade.color.GRAY, 20, batch=self.batch)
+        self.manager_win = UIManager()
+        self.manager_win.enable()
+        self.box_layout_choice1 = UIBoxLayout(vertical=False, space_between=40, x=(self.window.width / 3),
+                                             y=(self.window.height / 3))  # Вертикальный сте
+        # Добавим все виджеты в box, потом box в anchor
+        self.manager_win.add(self.box_layout_choice1)  # Всё в manager
+        self.manager = UIManager()
+        self.manager.enable()  # Включить, чтоб виджеты работали
+        # Layout для организации — как полки в шкафу
+        self.box_layout_choice = UIBoxLayout(vertical=False, space_between=40, x=(self.window.width / 120), y=(self.window.height / 1.191))  # Вертикальный сте
+        # Добавим все виджеты в box, потом box в anchor
+        self.setup_widgets()  # Функция ниж
+        self.manager.add(self.box_layout_choice)  # Всё в manager
+
+    def setup_widgets(self):
+
+
+        play_texture_button3 = arcade.load_texture("menubutton.png")
+        self.back_button3 = UITextureButton(texture=play_texture_button3,
+                                            scale=SCREEN_WIDTH / 13000)
+
+        play_texture_button = arcade.load_texture("play_again_button.png")
+        self.back_button = UITextureButton(texture=play_texture_button,
+                                            scale=SCREEN_WIDTH / 13000)
+        play_texture_button1 = arcade.load_texture("Back_to_menu.png")
+        self.back_button1 = UITextureButton(texture=play_texture_button1,
+                                           scale=SCREEN_WIDTH / 13000)
+        play_texture_button4 = arcade.load_texture("you_won_label.png")
+        self.back_button4 = UITextureButton(texture=play_texture_button4,
+                                           scale=SCREEN_WIDTH / 13000)
+        self.text = UILabel(text=f'Your time: {self.total_time} sec', x=(SCREEN_WIDTH / 2.6), y=(SCREEN_HEIGHT / 2), text_color=arcade.color.BLACK, font_size=(SCREEN_WIDTH // 40))
+        self.text1 = UILabel(text=f'Your best time: {0} sec', x=(SCREEN_WIDTH / 2.7), y=(SCREEN_HEIGHT / 2.3),
+                            text_color=arcade.color.BLACK, font_size=(SCREEN_WIDTH // 60))
+        self.manager_win.add(self.text1)
+        self.manager_win.add(self.text)
+        self.manager_win.add(self.box_layout_choice1)
+
+        self.back_button4.on_click = lambda event: print('lol')
+        self.back_button4.center_x, self.back_button4.center_y = (self.window.width / 2), (self.window.height / 1.5)
+        self.manager_win.add(self.back_button4)
+        self.size1 = self.back_button1.size
+        self.back_button1.on_click = lambda event: self.leave()
+        self.box_layout_choice1.add(self.back_button1)
+        self.size2 = self.back_button.size
+        self.back_button.on_click = lambda event: self.play_again()
+        self.box_layout_choice1.add(self.back_button)
+        self.size3 = self.back_button3.size
+        self.back_button3.on_click = lambda event: self.leave()
+        self.box_layout_choice.add(self.back_button3)
+        self.manager_win.add(self.box_layout_choice1)
+
+
+    def play_again(self):
+        self.manager_win.disable()
+        self.manager.disable()
+        Platformer()
+        self.keyboard_1.pop(0)
+        self.mechanics.pop(0)
+        self.setup()
+
+    def leave(self):
+        menu = Menu()
+        self.manager.disable()
+        self.manager.clear()
+        self.window.show_view(menu)
+
 
     def setup(self):
         self.wave = 1
+        self.total_time = 0
         self.cooldown = True
         self.cooldown2 = True
         self.colors1 = ['Yellow', 'Red', 'Blue']
@@ -228,16 +290,15 @@ class Platformer(arcade.Window):
         self.cabels.append(self.room1)
         self.cabels.append(self.room2)
         self.cabels.append(self.room3)
+        self.start = True
+        self.won = False
         # --- Игрок ---
         self.player_list.clear()
         self.player = Hero()
-
         self.player.center_x, self.player.center_y = self.spawn_point
         self.player_list.append(self.player)
         # --- Gui на экране ---
         self.puzzle_1_texture = arcade.load_texture('Puzzle_1_texture.png')
-
-
         # --- Для определения какую клавишу отображать ---
         self.keyboard_Number = 0
         # --- Для того чтобы игрок не мог ходить пока находится в головоломке ---
@@ -255,20 +316,28 @@ class Platformer(arcade.Window):
         self.tile.center_y = 150
         self.mechanics.append(self.tile)
         self.text_timer = arcade.Text(f"Time: {self.time1}",
-                                      1000, 600, arcade.color.BRONZE, 40)
+                                      (self.width / 1.23), (self.height / 2), arcade.color.BRONZE, 40)
         # Пол из «травы»
         for x in range(0, 1800, 64):
             tile = arcade.Sprite("ground.png", scale=0.05)
             tile.center_x = x
             tile.center_y = 64
             self.walls.append(tile)
-
         for y in range(64, 64 + 64 * 6, 64):
             self.s = arcade.Sprite("ground.png", 0.05)
             self.s.center_x = 1830
             self.s.center_y = y
             self.walls.append(self.s)
-
+        for y in range(64, 64 + 64 * 6, 64):
+            self.s = arcade.Sprite("ground.png", 0.05)
+            self.s.center_x = 610
+            self.s.center_y = y
+            self.walls.append(self.s)
+        for y in range(64, 64 + 64 * 6, 64):
+            self.s = arcade.Sprite("ground.png", 0.05)
+            self.s.center_x = 1220
+            self.s.center_y = y
+            self.walls.append(self.s)
         # Пара столбиков-стен
         for y in range(64, 64 + 64 * 6, 64):
             self.s = arcade.Sprite("ground.png", 0.05)
@@ -430,6 +499,7 @@ class Platformer(arcade.Window):
                         self.yellowcabelmouse = False
                     if self.complete['Yellow']:
                         self.yellowcabelentered = True
+
                 elif ((self.height / 1.2) / float(self.redcabel_y) - (self.height // 19)) < y < ((self.height / 1.2) / float(self.redcabel_y) + (self.height // 19)) and (((self.width // self.redcabel_x) - self.width // 13.2) <= x <= ((self.width // self.redcabel_x) + self.width // 13.2)) and not self.redcabelentered:
 
                     if not self.complete['Yellow']:
@@ -513,20 +583,74 @@ class Platformer(arcade.Window):
         self.cabelentertexture_yellow = arcade.load_texture('yellowcabelenter.png')
         self.cabelentertexture_blue = arcade.load_texture('bluecabelenter.png')
         self.cabelentertexture_red = arcade.load_texture('redcabelenter.png')
-        if int(self.waves) >= 1 and self.score_no:
-            self.waves -= 1
-            self.x_electrical += 610
-            self.tile.center_x = self.x_electrical
+        if self.score_no:
+            if self.infinity:
+                self.x_electrical += 610
+                self.tile.center_x = self.x_electrical
+                if self.what_room == 0:
+                    self.what_room = 1
+                    if not self.start:
+                        self.room3.center_x += 1830
+                        self.walls.move(change_x=610, change_y=0)
+                    self.player.center_x = self.room2.center_x - 100
+                elif self.what_room == 1:
+                    self.what_room = 2
+                    self.room1.center_x += 1830
+                    if self.start:
+                        self.start = False
+                    self.walls.move(change_x=610, change_y=0)
+                    self.player.center_x = self.room3.center_x - 100
+                elif self.what_room == 2:
+                    self.what_room = 0
+                    self.room2.center_x += 1830
+                    self.walls.move(change_x=610, change_y=0)
+                    self.player.center_x = self.room1.center_x - 100
 
-            if self.what_room == 0 and self.waves == 3:
-                self.what_room = 1
-                self.player.center_x = self.room2.center_x - 100
-            elif self.what_room == 1 and self.waves == 2:
-                self.what_room = 2
-                self.player.center_x = self.room3.center_x - 100
-            # elif self.what_room == 2 and self.waves == 1:
-            #     self.what_room = 0
-            #     self.player.center_x = self.room1.center_x - 100
+            else:
+                if int(self.waves) >= 1:
+                    self.waves -= 1
+                    self.x_electrical += 610
+                    self.tile.center_x = self.x_electrical
+
+                    if self.what_room == 0 and self.waves == 3:
+                        self.what_room = 1
+                        self.player.center_x = self.room2.center_x - 100
+                    elif self.what_room == 1 and self.waves == 2:
+                        self.what_room = 2
+                        self.player.center_x = self.room3.center_x - 100
+                if self.waves <= 1:
+                    self.won = True
+                    self.score = 0
+                    con = sqlite3.connect("your_best_time.db")
+
+                    # Создание курсора
+                    cur = con.cursor()
+
+                    # Выполнение запроса и получение всех результатов
+                    result = cur.execute("""SELECT time FROM best_time""").fetchall()
+
+                    if result:
+                        for elem in result:
+                            for el in elem:
+                                try:
+                                    if float(self.total_time) <= float(el):
+                                        cur.execute(f"""UPDATE best_time
+                                        SET time = '{self.total_time:.1f}'""")
+                                        con.commit()
+                                        self.text1.text = f'Your best time: {self.total_time:.1f} sec'
+                                    else:
+                                        self.text1.text = f'Your best time: {el} sec'
+                                except Exception as e:
+                                    print(e)
+                    else:
+                        cur.execute(f'''INSERT INTO best_time(time) VALUES({self.total_time:.1f})''')
+                        self.text1.text = f'Your best time: {self.total_time:.1f} sec'
+                        con.commit()
+
+                    con.close()
+                    self.text.text = f'Your time: {self.total_time:.1f} sec'
+
+
 
         if self.score_no:
             self.score += 1
@@ -547,10 +671,17 @@ class Platformer(arcade.Window):
         self.walls.draw()
         self.mechanics.draw()
         self.player_list.draw()
-
         if self.keyboard_Number == 1:
             self.keyboard_1.draw()
-
+        if self.won:
+            arcade.draw_texture_rect(arcade.load_texture('backround.png'), arcade.rect.XYWH(((SCREEN_WIDTH / 200) - 18) + self.player.center_x, (SCREEN_HEIGHT / 9), (SCREEN_WIDTH / 2.87), (SCREEN_HEIGHT / 2.7)))
+            self.manager_win.draw()
+            self.manager_win.enable()
+            self.manager.disable()
+        else:
+            self.manager_win.disable()
+            self.manager.enable()
+            self.manager.draw()
         if self.time1 <= 0:
             self.score_no = False
             self.reset()
@@ -562,24 +693,24 @@ class Platformer(arcade.Window):
         self.batch.draw()
         if self.puzzle == 1:
             self.puzzle_1 = arcade.draw_texture_rect(self.puzzle_1_texture, arcade.rect.XYWH(self.width // 2, self.height // 2, self.width // 2, self.height // 1.2))
-            self.text_timer.text = f"Time: {self.time1:.1f}"
+            self.text_timer.text = f"Time: {self.time1:.1f} sec"
             self.text_timer.draw()
             if self.redcabel1 and self.redcabelmouse:
                 try:
                     arcade.draw_texture_rect(arcade.load_texture('redcabel.png'), arcade.rect.XYWH(self.width // self.redcabel_x, (self.height / 1.2) / float(self.redcabel_y), self.width // 7, self.height // 9))
                     if self.complete['Red']:
-                        arcade.draw_line((self.width // self.redwas_x) - 90, (self.height / 1.2) / float(self.redwas_y), self.width // self.redcabel_x, (self.height / 1.2) / float(self.redcabel_y),
+                        arcade.draw_line((self.width // self.redwas_x) - (self.width // 18), (self.height / 1.2) / float(self.redwas_y), self.width // self.redcabel_x, (self.height / 1.2) / float(self.redcabel_y),
                                          arcade.color.RED, 40)
                 except Exception as e:
                     print(e)
             else:
-                arcade.draw_line((self.width // self.redcabel_x) - 90, (self.height / 1.2) / float(self.redcabel_y), self.x1, self.y1, arcade.color.RED, 40)
+                arcade.draw_line((self.width // self.redcabel_x) - (self.width / 18), (self.height / 1.2) / float(self.redcabel_y), self.x1, self.y1, arcade.color.RED, 40)
             if self.yellowcabel1:
                     if self.yellowcabelmouse:
                         try:
                             arcade.draw_texture_rect(arcade.load_texture('yellowcabel.png'), arcade.rect.XYWH(self.width // self.yellowcabel_x, (self.height / 1.2) / float(self.yellowcabel_y), self.width // 7, self.height // 9))
                             if self.complete['Yellow']:
-                                arcade.draw_line((self.width // self.yellowwas_x) - 90,
+                                arcade.draw_line((self.width // self.yellowwas_x) - (self.width / 18),
                                                  (self.height / 1.2) / float(self.yellowwas_y),
                                                  self.width // self.yellowcabel_x,
                                                  (self.height / 1.2) / float(self.yellowcabel_y),
@@ -587,17 +718,17 @@ class Platformer(arcade.Window):
                         except Exception as e:
                             print(e)
                     else:
-                        arcade.draw_line((self.width // self.yellowcabel_x) - 90, (self.height / 1.2) / float(self.yellowcabel_y), self.x1, self.y1, arcade.color.YELLOW, 40)
+                        arcade.draw_line((self.width // self.yellowcabel_x) - (self.width / 18), (self.height / 1.2) / float(self.yellowcabel_y), self.x1, self.y1, arcade.color.YELLOW, 40)
             if self.bluecabel1 and self.bluecabelmouse:
                 try:
                     arcade.draw_texture_rect(arcade.load_texture('bluecabel.png'), arcade.rect.XYWH(self.width // self.bluecabel_x, (self.height / 1.2) / float(self.bluecabel_y), self.width // 7, self.height // 9))
                     if self.complete['Blue']:
-                        arcade.draw_line((self.width // self.bluewas_x) - 90, (self.height / 1.2) / float(self.bluewas_y), self.width // self.bluecabel_x, (self.height / 1.2) / float(self.bluecabel_y),
+                        arcade.draw_line((self.width // self.bluewas_x) - (self.width / 18), (self.height / 1.2) / float(self.bluewas_y), self.width // self.bluecabel_x, (self.height / 1.2) / float(self.bluecabel_y),
                                          arcade.color.BLUE, 40)
                 except Exception as e:
                     print(e)
             else:
-                arcade.draw_line((self.width // self.bluecabel_x) - 90, (self.height / 1.2) / float(self.bluecabel_y), self.x1, self.y1, arcade.color.BLUE, 40)
+                arcade.draw_line((self.width // self.bluecabel_x) - (self.width / 18), (self.height / 1.2) / float(self.bluecabel_y), self.x1, self.y1, arcade.color.BLUE, 40)
             if self.redcabel2:
                 try:
                     arcade.draw_texture_rect(self.cabelentertexture_red, arcade.rect.XYWH(self.width // 1.5, (self.height / 1.2) / float(self.redcabel_y2), self.width // 7, self.height // 9))
@@ -643,11 +774,11 @@ class Platformer(arcade.Window):
     def on_update(self, dt: float):
         self.player_list.update(dt, self.keys_pressed)
         self.player_list.update_animation()
+        self.total_time += dt
         # Обновляем физику — движок сам двинет игрока и платформы
         self.engine.update()
         if self.puzzle == 1:
             self.time1 -= 0.025
-        # Собираем монетки и проверяем опасности
         if arcade.check_for_collision_with_list(self.player, self.mechanics):
             self.keyboard_Number = 1
         else:
@@ -663,13 +794,286 @@ class Platformer(arcade.Window):
 
         # Обновим счёт
         self.text_score = arcade.Text(f"Score: {self.score}",
-                                      16, SCREEN_H - 36, arcade.color.SKY_BLUE,
+                                      SCREEN_W / 14, SCREEN_H / 2, arcade.color.SKY_BLUE,
                                       30, batch=self.batch)
 
+class Info(arcade.View):
+    def __init__(self):
+        super().__init__()
+        arcade.set_background_color(arcade.color.YELLOW)
+
+        # UIManager — сердце GUI
+        self.manager = UIManager()
+        self.manager.enable()  # Включить, чтоб виджеты работали
+
+        # Layout для организации — как полки в шкафу
+        self.box_layout = UIBoxLayout(vertical=True, space_between=5, align='left', size_hint=(1, -1))  # Вертикальный стек
+
+        # Добавим все виджеты в box, потом box в anchor
+        self.setup_widgets()  # Функция ниже
+
+        self.manager.add(self.box_layout)  # Всё в manager
+
+    def setup_widgets(self):
+        play_texture_button = arcade.load_texture("normal_button_back.png")
+        play_texture_hovered = arcade.load_texture("hover_button_back.png")
+        play_button = UITextureButton(texture=play_texture_button,
+                                        texture_hovered=play_texture_hovered,
+                                        scale=SCREEN_WIDTH / 2100)
+        play_button.on_click = lambda event: self.back() # Не только лямбду, конечно
+        self.box_layout.add(play_button)
+        text = UILabel(text='Soon...', x=400, y=400, text_color=arcade.color.BLACK, font_size=(SCREEN_WIDTH // 40))
+        self.manager.add(text)
+
+    def on_draw(self):
+        self.clear()
+        self.manager.draw()  # Рисуй GUI поверх всего
+
+    def back(self):
+        menu = Menu()
+        self.manager.disable()
+        self.manager.clear()
+        self.window.show_view(menu)
+
+class Menu(arcade.View):
+    def __init__(self):
+        super().__init__()
+        arcade.set_background_color(arcade.color.GRAY)
+        self.texture = arcade.load_texture('lobby.png')
+
+        # UIManager — сердце GUI
+        self.manager = UIManager()
+        self.manager.enable()  # Включить, чтоб виджеты работали
+
+        # Layout для организации — как полки в шкафу
+        self.box_layout = UIBoxLayout(vertical=True, space_between=5, align='left')  # Вертикальный стек
+        self.box_layout.size_hint = ()
+
+        # Добавим все виджеты в box, потом box в anchor
+        self.setup_widgets()  # Функция ниже
+
+        self.manager.add(self.box_layout)  # Всё в manager
+
+
+    def setup_widgets(self):
+        play_texture_button = arcade.load_texture("normal_button_play.png")
+        play_texture_hovered = arcade.load_texture("hover_button_play.png")
+        play_button = UITextureButton(texture=play_texture_button,
+                                        texture_hovered=play_texture_hovered,
+                                        scale=SCREEN_WIDTH / 2100)
+        play_button.on_click = lambda event: self.play()  # Не только лямбду, конечно
+        self.box_layout.add(play_button)
+        info_texture_button = arcade.load_texture("normal_button_info.png")
+        info_texture_hovered = arcade.load_texture("hover_button_info.png")
+        info_texture_button = UITextureButton(texture=info_texture_button,
+                                              texture_hovered=info_texture_hovered,
+                                              scale=SCREEN_WIDTH / 2530)
+        info_texture_button.on_click = lambda event: self.info()  # Не только лямбду, конечно
+        self.box_layout.add(info_texture_button)
+        exit_texture_button = arcade.load_texture("normal_button_exit.png")
+        exit_texture_hovered = arcade.load_texture("hover_button_exit.png")
+        exit_texture_button = UITextureButton(texture=exit_texture_button,
+                                              texture_hovered=exit_texture_hovered,
+                                              scale=SCREEN_WIDTH / 2960)
+        exit_texture_button.on_click = lambda event: self.are_you_sure_to_leave()  # Не только лямбду, конечно
+        self.box_layout.add(exit_texture_button)
+
+    def on_draw(self):
+        self.clear()
+        arcade.draw_texture_rect(self.texture,
+                                 arcade.rect.XYWH(self.width // 2, self.height // 2, self.width, self.height))
+        self.manager.draw()  # Рисуй GUI поверх всего
+
+    def info(self):
+        info = Info()
+        self.manager.disable()
+        self.manager.clear()
+        self.window.show_view(info)
+
+    def play(self):
+        play = Choice()
+        self.manager.disable()
+        self.manager.clear()
+        self.window.show_view(play)
+
+    def are_you_sure_to_leave(self):
+        message_box = UIMessageBox(
+            width=SCREEN_WIDTH / 3, height=SCREEN_WIDTH / 7,
+            message_text="EXIT\nAre you sure?",
+            buttons=("Yes", "No")
+        )
+        message_box.on_action = self.on_message_button
+        self.manager.add(message_box)
+
+    def on_message_button(self, message):
+        if ('Yes' or 'Да') in str(message):
+            self.window.close()
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        pass  # Для кликов, но manager сам обрабатывает
+
+class Choice(arcade.View):
+    def __init__(self):
+        super().__init__()
+        arcade.set_background_color(arcade.color.BRONZE)
+
+        # UIManager — сердце GUI
+        self.manager = UIManager()
+        self.manager.enable()  # Включить, чтоб виджеты работали
+
+        # Layout для организации — как полки в шкафу
+        self.box_layout = UIBoxLayout(vertical=True, space_between=5, align='left')  # Вертикальный стек
+        self.box_layout_choice = UIBoxLayout(vertical=False, space_between=5, x=200)  # Вертикальный сте
+        # Добавим все виджеты в box, потом box в anchor
+        self.setup_widgets()  # Функция ниже
+        self.y1 = 400
+        self.manager.add(self.box_layout)  # Всё в manager
+        self.manager.add(self.box_layout_choice)  # Всё в manager
+
+    def setup_widgets(self):
+        back_texture_button = arcade.load_texture("normal_button_back.png")
+        back_texture_hovered = arcade.load_texture("hover_button_back.png")
+        back_button = UITextureButton(texture=back_texture_button,
+                                        texture_hovered=back_texture_hovered,
+                                        scale=SCREEN_WIDTH / 2100)
+        play_texture_button1 = arcade.load_texture("what_room.png")
+        play_texture_hovered1 = arcade.load_texture("door_puzzle_down.png")
+        self.play_button1 = UITextureButton(texture=play_texture_button1,
+                                            texture_hovered=play_texture_hovered1,
+                                            scale=SCREEN_WIDTH / 3400)
+        play_texture_button3 = arcade.load_texture("what_room.png")
+        play_texture_hovered3 = arcade.load_texture("door_wonders_farmers.png")
+        self.play_button3 = UITextureButton(texture=play_texture_button3,
+                                      texture_hovered=play_texture_hovered3,
+                                      scale=SCREEN_WIDTH / 3400)
+        play_texture_button2 = arcade.load_texture("what_room.png")
+        play_texture_hovered2 = arcade.load_texture("door_breaker_dungeon.png")
+        self.play_button2 = UITextureButton(texture=play_texture_button2,
+                                            texture_hovered=play_texture_hovered2,
+                                            scale=SCREEN_WIDTH / 3400)
+        self.size2 = self.play_button2.size
+        self.size3 = self.play_button3.size
+        self.play_button2.on_click = lambda event: print('hi')
+        self.play_button3.on_click = lambda event: print('hi')
+        self.size1 = self.play_button1.size
+        self.play_button1.on_click = lambda event: self.choice_puzzle_down()
+        self.box_layout_choice.add(self.play_button1)
+        self.box_layout_choice.add(self.play_button2)
+        self.box_layout_choice.add(self.play_button3)
+        back_button.on_click = lambda event: self.back() # Не только лямбду, конечно
+        self.box_layout.add(back_button)
+
+    def choice_puzzle_down(self):
+        choice = Choice_puzzle_down()
+        self.manager.disable()
+        self.manager.clear()
+        self.window.show_view(choice)
+
+    def on_draw(self):
+        self.clear()
+        if self.play_button1.hovered:
+            self.play_button1.size = (SCREEN_WIDTH / 2.5, SCREEN_WIDTH / 2.5)
+            self.box_layout_choice.center_y = 800
+        else:
+            self.play_button1.size = self.size1
+        if self.play_button2.hovered:
+            self.box_layout_choice.center_y = 800
+            self.play_button2.size = (SCREEN_WIDTH / 3, SCREEN_WIDTH / 3)
+        else:
+            self.play_button2.size = self.size2
+        if self.play_button3.hovered:
+            self.box_layout_choice.center_y = 800
+            self.play_button3.size = (SCREEN_WIDTH / 3, SCREEN_WIDTH / 3)
+        else:
+            self.play_button3.size = self.size3
+        self.box_layout_choice.center_y = 800
+        self.manager.draw()  # Рисуй GUI поверх всего
+
+    def back(self):
+        menu = Menu()
+        self.manager.disable()
+        self.manager.clear()
+        self.window.show_view(menu)
+
+class Choice_puzzle_down(arcade.View):
+    def __init__(self, can_press=False):
+        super().__init__()
+        arcade.set_background_color(arcade.color.RED)
+        self.y1 = 400
+        # UIManager — сердце GUI
+        self.manager = UIManager()
+        self.manager.enable()  # Включить, чтоб виджеты работали
+        # Layout для организации — как полки в шкафу
+        self.box_layout = UIBoxLayout(vertical=True, space_between=5, align='left')  # Вертикальный стек
+        self.box_layout_choice = UIBoxLayout(vertical=False, space_between=40, x=500)  # Вертикальный сте
+        # Добавим все виджеты в box, потом box в anchor
+        self.setup_widgets()  # Функция ниже
+
+        self.manager.add(self.box_layout)  # Всё в manager
+        self.manager.add(self.box_layout_choice)  # Всё в manager
+
+    def setup_widgets(self):
+        back_texture_button = arcade.load_texture("normal_button_back.png")
+        back_texture_hovered = arcade.load_texture("hover_button_back.png")
+        back_button = UITextureButton(texture=back_texture_button,
+                                        texture_hovered=back_texture_hovered,
+                                        scale=SCREEN_WIDTH / 2100)
+        play_texture_button1 = arcade.load_texture("normal_button_puzzle_down.png")
+        self.play_button1 = UITextureButton(texture=play_texture_button1,
+                                            scale=SCREEN_WIDTH / 3900)
+        play_texture_button3 = arcade.load_texture("infinity_button_puzzle_down.png")
+        self.play_button3 = UITextureButton(texture=play_texture_button3,
+                                      scale=SCREEN_WIDTH / 3900)
+
+        self.size1 = self.play_button1.size
+        self.size3 = self.play_button3.size
+        self.play_button3.on_click = lambda event: self.infinity()
+        self.play_button1.on_click = lambda event: self.normal()
+        self.box_layout_choice.add(self.play_button1)
+        self.box_layout_choice.add(self.play_button3)
+        back_button.on_click = lambda event: self.back() # Не только лямбду, конечно
+        self.box_layout.add(back_button)
+
+    def on_draw(self):
+        self.clear()
+        if self.play_button1.hovered:
+            self.play_button1.size = (SCREEN_WIDTH / 2.5, SCREEN_WIDTH / 2.5)
+            self.box_layout_choice.center_y = 800
+        else:
+            self.play_button1.size = self.size1
+        if self.play_button3.hovered:
+            self.box_layout_choice.center_y = 800
+            self.play_button3.size = (SCREEN_WIDTH / 2.5, SCREEN_WIDTH / 2.5)
+        else:
+            self.play_button3.size = self.size3
+        self.box_layout_choice.center_y = 800
+        self.manager.draw()  # Рисуй GUI поверх всего
+
+    def infinity(self):
+        game = Platformer(True)
+        game.setup()
+        self.manager.disable()
+        self.manager.clear()
+        self.window.show_view(game)
+
+    def normal(self):
+        game = Platformer()
+        game.setup()
+        self.manager.disable()
+        self.manager.clear()
+        self.window.show_view(game)
+
+    def back(self):
+        menu = Choice()
+        self.manager.disable()
+        self.manager.clear()
+        self.window.show_view(menu)
 
 def main():
-    game = Platformer()
-    game.setup()
+    game = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, 'Menu', fullscreen=True)
+    game.center_window()
+    menu = Menu()
+    game.show_view(menu)
     arcade.run()
 
 if __name__ == "__main__":
