@@ -119,11 +119,11 @@ class Level_1(arcade.View):
 
                 # Позиция пули — перед персонажем
                 attack_1.center_x = SCREEN_WIDTH // 2 + 2
-                attack_1.center_y = (SCREEN_HEIGHT // 3) * 2
+                attack_1.center_y = SCREEN_HEIGHT // 2
 
                 # Рассчитываем направление к курсору
                 dx = self.hero_x - (SCREEN_WIDTH // 2 + 2)
-                dy = self.hero_y - ((SCREEN_HEIGHT // 3) * 2)
+                dy = self.hero_y - (SCREEN_HEIGHT // 2)
                 distance = max(1, (dx ** 2 + dy ** 2) ** 0.5)  # Избегаем деления на 0
 
                 # Устанавливаем скорость
@@ -221,7 +221,7 @@ class Level_1(arcade.View):
             if (self.total_time >= 5 and self.total_time <= 15) or (self.total_time >= 35 and self.total_time <= 45):
                 self.attack_list_2.clear()
                 for i in range(2):
-                    attack_2_1 = arcade.Sprite("kulak_vertikal.png", 0.7)
+                    attack_2_1 = arcade.Sprite("kulak_vertikal.png", SCREEN_HEIGHT / 900)
                     if i == 0:
                     # Позиция пули — перед персонажем
                         attack_2_1.center_x = SCREEN_WIDTH // 10
@@ -235,7 +235,7 @@ class Level_1(arcade.View):
                     self.total_time >= 50 and self.total_time <= 60):
                 self.attack_list_2.clear()
                 for i in range(2):
-                    attack_2_2 = arcade.Sprite("kulak_horizontal.png", 0.8)
+                    attack_2_2 = arcade.Sprite("kulak_horizontal.png", SCREEN_WIDTH / 1000)
 
                     if i == 0:
                         # Позиция пули — перед персонажем
@@ -264,8 +264,7 @@ class Level_1(arcade.View):
 
         self.batch = Batch()
         if self.player_list == None and self.texture != self.fonts.texture:
-            self.fonts = arcade.create_text_sprite(f"Поражение!"
-                                                   f"Space для выхода в меню.")
+            self.fonts = arcade.create_text_sprite(f"Поражение!\n Space для выхода в меню.\n")
             arcade.stop_sound(self.backgound_player)
             self.texture = self.fonts.texture
             self.enemy_list.clear()
@@ -274,9 +273,7 @@ class Level_1(arcade.View):
             self.attack_list_2 = None
             self.fonts_list.append(self.fonts)
         if self.enemy_list == None and self.texture != self.fonts_2.texture:
-            self.fonts_2 = arcade.create_text_sprite(f"Победац!"
-                                                     f"Общее время: {self.total_time // 1} секунд."
-                                                     f"Space для выхода в меню.")
+            self.fonts_2 = arcade.create_text_sprite(f"Победа!\n Общее время: {self.total_time // 1} секунд.\n Space для выхода в меню.\n")
             arcade.stop_sound(self.backgound_player)
             self.fonts_list.append(self.fonts_2)
             self.texture = self.fonts_2.texture
