@@ -4,10 +4,10 @@ from pyglet.graphics import Batch
 import random
 import sqlite3
 import enum
-from arcade.gui import UIManager,UITextureButton, UILabel, UIMessageBox  # Это разные виджеты
+from arcade.gui import UIManager, UITextureButton, UILabel, UIMessageBox, UIImage, UITextArea  # Это разные виджеты
 from arcade.gui.widgets.layout import UIBoxLayout  # А это менеджеры компоновки, как в pyQT
 
-SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
+SCREEN_WIDTH, SCREEN_HEIGHT = arcade.get_display_size()
 TITLE = "HeadBreakers"
 # Физика и движение
 GRAVITY = 2            # Пикс/с^2
@@ -20,7 +20,7 @@ class FaceDirection(enum.Enum):
     RIGHT = 1
 
 # Задаём размеры окна
-SCREEN_W, SCREEN_H = 800, 600
+SCREEN_W, SCREEN_H = arcade.get_display_size()
 
 SCREEN_TITLE = "BOSS BREAKERS"
 CHARACTER_SCALING = 1
@@ -427,7 +427,7 @@ class Platformer(arcade.View):
 
         # Игрок
         self.player = None
-        self.spawn_point = (128, 256)  # Куда респавнить после шипов
+        self.spawn_point = (128, 256)
 
         # Физика
         self.engine = None
@@ -471,9 +471,11 @@ class Platformer(arcade.View):
         play_texture_button4 = arcade.load_texture("you_won_label.png")
         self.back_button4 = UITextureButton(texture=play_texture_button4,
                                            scale=SCREEN_WIDTH / 13000)
+        self.image_back = UIImage(texture=arcade.load_texture('backround.png'),x=(SCREEN_WIDTH / 4), y=(SCREEN_HEIGHT / 5), width=(SCREEN_WIDTH / 2.1), height=(SCREEN_HEIGHT / 2))
         self.text = UILabel(text=f'Your time: {self.total_time} sec', x=(SCREEN_WIDTH / 2.6), y=(SCREEN_HEIGHT / 2), text_color=arcade.color.BLACK, font_size=(SCREEN_WIDTH // 40))
         self.text1 = UILabel(text=f'Your best time: {0} sec', x=(SCREEN_WIDTH / 2.7), y=(SCREEN_HEIGHT / 2.3),
                             text_color=arcade.color.BLACK, font_size=(SCREEN_WIDTH // 60))
+        self.manager_win.add(self.image_back)
         self.manager_win.add(self.text1)
         self.manager_win.add(self.text)
         self.manager_win.add(self.box_layout_choice1)
@@ -617,7 +619,7 @@ class Platformer(arcade.View):
         self.tile.center_y = 150
         self.mechanics.append(self.tile)
         self.text_timer = arcade.Text(f"Time: {self.time1}",
-                                      (self.width / 8) * 6, (self.height / 2), arcade.color.BRONZE, 20)
+                                      (self.width / 8) * 6, (self.height / 2), arcade.color.BRONZE, SCREEN_WIDTH * 25 / SCREEN_HEIGHT)
         # Пол из «травы»
         for x in range(0, 1800, 64):
             tile = arcade.Sprite("ground.png", scale=0.05)
@@ -975,7 +977,7 @@ class Platformer(arcade.View):
         if self.keyboard_Number == 1:
             self.keyboard_1.draw()
         if self.won:
-            arcade.draw_texture_rect(arcade.load_texture('backround.png'), arcade.rect.XYWH((SCREEN_WIDTH / 200) + self.player.center_x, (SCREEN_HEIGHT / 3), (SCREEN_WIDTH / 2), (SCREEN_HEIGHT / 2)))
+            # arcade.draw_texture_rect(arcade.load_texture('backround.png'), arcade.rect.XYWH((SCREEN_WIDTH / 200) + self.player.center_x, (SCREEN_HEIGHT * 0.07), (SCREEN_WIDTH / 2), (SCREEN_HEIGHT / 2)))
             self.manager_win.draw()
             self.manager_win.enable()
             self.manager.disable()
@@ -1089,7 +1091,6 @@ class Platformer(arcade.View):
         target = (self.player.center_x, self.player.center_y)
         cam_x = target[0]
         cam_y = target[1]
-
         self.world_camera.position = (cam_x, cam_y)
         self.gui_camera.position = (SCREEN_W / 2, SCREEN_H / 2)
 
@@ -1123,7 +1124,17 @@ class Info(arcade.View):
                                         scale=SCREEN_WIDTH / 2100)
         play_button.on_click = lambda event: self.back() # Не только лямбду, конечно
         self.box_layout.add(play_button)
-        text = UILabel(text='Soon...', x=400, y=400, text_color=arcade.color.BLACK, font_size=(SCREEN_WIDTH // 40))
+        text = UITextArea(text='После запуска игры вы увидите меню с 3 кнопками.\n Для того, чтобы выйти нажмите кнопку Exit, для того чтобы играть нажмите кнопку Play.\n'
+                            ' Далее вы увидите 3 двери-кнопки. При нажатии на 1 дверь вы сможете выбрать режим 1-ой миниигры (нормальный или бесконечный), управление и суть одинакова в обоих режимах.'
+                            ' Нажмите A чтобы идти влево и D чтобы идти вправо. Когда подойдете к щитку нажмите E. У вас будет 30 секунд, чтобы соединить провода по соответствующим им цветам.'
+                            ' Чтобы выбрать провод, кликните по нему левой кнопкой мыши, чтобы соединить с другим проводом (соединять нужно с проводом в противоположной стороне щитка) наведите на него курсор и также нажмите левую кнопку мыши.'
+                            ' Если захотите заранее выйти, в левом верхнем углу есть кнопка для этого. После того как пройдете (если проходите нормальный режим) появится экран окончания. Кнопка Menu вернет вас в меню, кнопка Play Again заново запустит игру.'
+                            ' Если в меню после нажатия кнопки Play выбрать вторую кнопку-дверь, то начнется вторая миниигра. Управление: W вперед, S назад, A влево, D впарво, левая кнопка мыши- стрельба. Наведите курсор на босса и стреляйте.'
+                            ' У босса 100 здоровья, у вас- 5, на прохождение дается 1 минута. Атаки босса: 1. на каждый ваш выстрел босс отвечает ударом в вашем направлении. 2. после 5 секунд после начала миниигры появятся руки-ограничители,'
+                            ' их положение меняется каждые 20 секунд (сначала 2 по вертикали по краям, затем 2 по горизонтали по краям), первые 15 секунд своего существования ограничители практически моментально вас убивают при соприкосновении,'
+                            ' последние 5 секунд наносят 1 урон и пропадают. 3. Соприкосновение с боссом приводит к моментальной смерти вашего персонажа. После победы/поражения появляется конечный экран.'
+                            ' При нажатии пробела на конечном экране вы вернетесь в меню. Если в меню после нажатия кнопки Play выбрать дверь-кнопку 3, то ничего не произойдет, т.к. 3 миниигры нету.'
+                            ' Это весь контент в игре, спасибо за прочтение!', x=SCREEN_WIDTH / 17, y=SCREEN_HEIGHT / 22 , text_color=arcade.color.BLACK, font_size=(SCREEN_WIDTH // 70), width=SCREEN_WIDTH / 1.1 , height=SCREEN_HEIGHT / 1.1)
         self.manager.add(text)
 
     def on_draw(self):
@@ -1377,7 +1388,7 @@ class Choice_puzzle_down(arcade.View):
         self.window.show_view(menu)
 
 def main():
-    game = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, 'Menu')
+    game = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, 'Menu', fullscreen=True)
     game.center_window()
     menu = Menu()
     game.show_view(menu)
