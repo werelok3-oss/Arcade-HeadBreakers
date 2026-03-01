@@ -7,7 +7,7 @@ import enum
 from arcade.gui import UIManager, UITextureButton, UILabel, UIMessageBox, UIImage, UITextArea  # Это разные виджеты
 from arcade.gui.widgets.layout import UIBoxLayout  # А это менеджеры компоновки, как в pyQT
 
-SCREEN_WIDTH, SCREEN_HEIGHT = arcade.get_display_size()
+SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 720
 TITLE = "HeadBreakers"
 # Физика и движение
 GRAVITY = 2            # Пикс/с^2
@@ -20,7 +20,7 @@ class FaceDirection(enum.Enum):
     RIGHT = 1
 
 # Задаём размеры окна
-SCREEN_W, SCREEN_H = arcade.get_display_size()
+SCREEN_W, SCREEN_H = 1280, 720
 
 SCREEN_TITLE = "BOSS BREAKERS"
 CHARACTER_SCALING = 1
@@ -1388,7 +1388,7 @@ class Choice_puzzle_down(arcade.View):
         self.window.show_view(menu)
 
 def main():
-    game = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, 'Menu', fullscreen=True)
+    game = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, 'Menu')
     game.center_window()
     menu = Menu()
     game.show_view(menu)
