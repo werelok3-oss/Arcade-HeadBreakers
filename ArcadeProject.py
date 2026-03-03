@@ -82,7 +82,7 @@ class Level_1(arcade.View):
         self.keys_pressed = set()
         self.bullets = []
         self.sound = arcade.load_sound(find_texture("boss_1_music.mp3"))
-        enemy = arcade.Sprite("boss_1.png", 0.3)
+        enemy = arcade.Sprite(find_texture("boss_1.png"), 0.3)
         enemy.center_x = SCREEN_WIDTH // 2 + 2
         enemy.center_y = SCREEN_HEIGHT // 2 - 7
         self.enemy_list.append(enemy)
